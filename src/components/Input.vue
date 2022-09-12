@@ -1,5 +1,5 @@
 <template>
-  <input type="text" name="text" @input="$emit('update:modelValue', $event.target.value)"  :placeholder="text" >
+  <input type="text" name="text" @input="$emit('update:modelValue', $event.target.value)"  :placeholder="text" :value="modelValue">
 </template>
 
 <script lang="ts">
@@ -11,7 +11,9 @@ export default defineComponent ({
     text: {
       type: String,
       default: "Digite",
-      required: false,
+    },
+    modelValue: {
+      type: String,
     }
   }
 })
