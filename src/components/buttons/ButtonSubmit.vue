@@ -35,5 +35,6 @@ button {
 
 button:hover {
   cursor: pointer;
+  opacity: 0.8;
 }
 </style>

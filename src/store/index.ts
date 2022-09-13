@@ -11,6 +11,9 @@ export default createStore({
     SET_TODO_LIST(state: VueState, todoList: TodoList) {
       state.todoList.push(todoList);
     },
+    SET_TODOS_LIST(state: VueState, todos: TodoList[]) {
+      state.todoList = todos;
+    },
     CLEAR_TODO_LIST(state: VueState, todoList: TodoList[]) {
       state.todoList = todoList;
     },
@@ -19,8 +22,15 @@ export default createStore({
     setTodoList({ commit }, todoList: TodoList) {
       commit("SET_TODO_LIST", todoList);
     },
-    clearTodoList({ commit }) {
-      commit("CLEAR_TODO_LIST", []);
+    clearTodoList({ commit }, todoList: TodoList) {
+      const index = this.state.todoList.indexOf(todoList);
+      this.state.todoList.splice(index, 1)
+      commit("CLEAR_TODO_LIST", this.state.todoList);
+    },
+    editTodoList({ commit }, { todo, indexToUpdate }) {
+      this.state.todoList[indexToUpdate] = todo;
+
+      commit("CLEAR_TODO_LIST", this.state.todoList);
     },
   },
   getters: {
