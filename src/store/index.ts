@@ -3,6 +3,7 @@ import TodoList from "../entities/TodoList";
 
 export class VueState {
   todoList: TodoList[] = [];
+  filteredTodos: TodoList[] = [];
 }
 export default createStore({
   state: new VueState(),
@@ -16,6 +17,9 @@ export default createStore({
     },
     CLEAR_TODO_LIST(state: VueState, todoList: TodoList[]) {
       state.todoList = todoList;
+    },
+    SET_FILTERED_TODO(state: VueState, filteredTodos: TodoList[]) {
+      state.filteredTodos = filteredTodos;
     },
   },
   actions: {
@@ -32,10 +36,22 @@ export default createStore({
 
       commit("CLEAR_TODO_LIST", this.state.todoList);
     },
+    search({ commit }, value: string) {
+      const todos = this.state.todoList;
+
+      const foundTodos = todos.filter((todo: TodoList) => {
+        const todoText = todo.text.toLowerCase();
+        const searchingName = value.toLowerCase();
+        return todoText.includes(searchingName);
+      })
+      commit("SET_FILTERED_TODO", foundTodos);
+    },
   },
   getters: {
 
     todoList: (state) => state.todoList,
+    filteredTodos: (state) => state.filteredTodos,
+
   },
   modules: {
   }

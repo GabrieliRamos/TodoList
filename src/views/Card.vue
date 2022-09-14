@@ -1,6 +1,7 @@
 <template>
   <section>
     <h1>Lista de tarefas</h1>
+    <Search @modelValue="search($event)" text="Digite uma nova tarefa.." label="Título:"/>
     <ul >
       <li v-for="(todo, index) in todos" :key="index" :class="[ todo.done ? 'select' : 'deselect']">
         <div class="todo" @click="done(todo)">
@@ -31,16 +32,25 @@ import {useStore} from "vuex";
 import Input from "@/components/inputs/Input.vue";
 import ButtonSubmit from "@/components/buttons/ButtonSubmit.vue";
 import DescriptionTextArea from "@/components/inputs/DescriptionTextArea.vue";
+import Search from "@/components/inputs/Search.vue";
 
 export default defineComponent({
   name: 'Card',
-  components: {ButtonSubmit, Input, DescriptionTextArea},
+  components: {ButtonSubmit, Input, DescriptionTextArea, Search},
   setup() {
     const store = useStore();
 
     const newTodo: Ref<TodoList> = ref(new TodoList());
 
-    const todos: ComputedRef<TodoList[]> = computed(() => store.getters.todoList);
+    const todos: ComputedRef<TodoList[]> = computed(() => {
+      const todos = store.getters.todoList;
+      const filteredTodos = store.getters.filteredTodos;
+      if (!filteredTodos.length) {
+        return todos;
+      }
+      return filteredTodos;
+
+    })
 
     const isEdit: Ref<boolean> = ref(false);
 
@@ -87,6 +97,10 @@ export default defineComponent({
       loadedIndex.value = index;
     }
 
+    const search = (todo: string) => {
+      store.dispatch("search",todo);
+    }
+
     return {
       newTodo,
       todos,
@@ -95,6 +109,7 @@ export default defineComponent({
       done,
       clear,
       edit,
+      search
     }
   }
 });
