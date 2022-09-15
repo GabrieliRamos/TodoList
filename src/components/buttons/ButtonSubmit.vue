@@ -1,5 +1,5 @@
 <template>
-  <button class="submit" type="button">{{ text }}</button>
+  <button class="submit" type="submit">{{ text }}</button>
 </template>
 
 <script lang="ts">
@@ -10,7 +10,6 @@ export default defineComponent ({
   props: {
     text: {
       type: String,
-      default: "enviar",
       required: false,
     }
   }

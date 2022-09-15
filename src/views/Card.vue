@@ -1,104 +1,146 @@
 <template>
   <section>
     <h1>Lista de tarefas</h1>
-    <ul >
-      <li v-for="(todo, index) in todos" :key="index" :class="[ todo.done ? 'select' : 'deselect']">
-        <div class="todo" @click="done(todo)">
-          <input type="checkbox" :checked="todo.done"/>
+    <SearchComponent @modelValue="searchToDo($event)" text="Buscar tarefa" label="Busca"/>
+    <ul v-if="filteredList.length > 0">
+      <li v-for="(todo, index) in filteredList" :key="index" :class="[todo.done ? 'select' : 'deselect']">
+        <div class="todo" @click.prevent="done(todo)">
+          <input type="checkbox" :checked="todo.done">
           <div class="todo-information">
-            <span>{{ todo.text }}</span>
+            <span>{{ todo.title }}</span>
             <p>{{ todo.description }}</p>
           </div>
         <div class="actions" @click.stop>
-          <button class="edit" @click="edit(todo, index)" />
-          <button class="delete" @click="clear(todo)" />
+          <ButtonItemOption class="edit" @clicked="edit(todo, index)"></ButtonItemOption>
+          <ButtonItemOption class="delete" @clicked="remove(todo)"></ButtonItemOption>
         </div>
         </div>
       </li>
     </ul>
-    <form>
-      <Input v-model:modelValue="newTodo.text" text="Digite uma nova tarefa.." label="Título:"/>
-      <DescriptionTextArea v-model:modelValue="newTodo.description" label="Descrição:"/>
-      <ButtonSubmit @click="submit" text="salvar"/>
+    <EmptyList v-else></EmptyList>
+    <form @submit.prevent="submit">
+      <InputComponent v-model:modelValue="toDoTask.title" text="Digite uma nova tarefa..." label="Título:"/>
+      <InputComponent v-model:modelValue="toDoTask.description" text="Digite a descrição..." label="Descrição:"/>
+      <ButtonSubmit text="salvar"/>
     </form>
   </section>
 </template>
 
 <script lang="ts">
 import {computed, ComputedRef, defineComponent, ref, Ref} from 'vue';
-import TodoList from "@/entities/TodoList";
+import ToDoItem from "@/entities/ToDoItem";
 import {useStore} from "vuex";
-import Input from "@/components/inputs/Input.vue";
+import InputComponent from "@/components/inputs/Input.vue";
 import ButtonSubmit from "@/components/buttons/ButtonSubmit.vue";
-import DescriptionTextArea from "@/components/inputs/DescriptionTextArea.vue";
+import SearchComponent from "@/components/inputs/Search.vue";
+import EmptyList from "@/components/EmptyList.vue";
+import ButtonItemOption from "@/components/buttons/ButtonItemOption.vue";
 
 export default defineComponent({
-  name: 'Card',
-  components: {ButtonSubmit, Input, DescriptionTextArea},
+  name: 'CardComponent',
+  components: {ButtonItemOption: ButtonItemOption, EmptyList, SearchComponent, ButtonSubmit, InputComponent},
   setup() {
     const store = useStore();
 
-    const newTodo: Ref<TodoList> = ref(new TodoList());
+    const toDoTask: Ref<ToDoItem> = ref(new ToDoItem());
 
-    const todos: ComputedRef<TodoList[]> = computed(() => store.getters.todoList);
+    const toDoList: ComputedRef<ToDoItem[]> = computed(() => store.getters.todoList);
+
+    const filteredList: Ref<ToDoItem[]> = ref([]);
 
     const isEdit: Ref<boolean> = ref(false);
 
-    const loadedTodo: Ref<TodoList | null> = ref(null);
+    const search: Ref<string> = ref('')
+
+    const loadedTodoTask: Ref<ToDoItem | null> = ref(null);
 
     const loadedIndex: Ref<number | null> = ref(null);
 
     const submit = () => {
-      if (loadedTodo.value) {
-        const todoToUpdate = new TodoList(
-            newTodo.value.text,
-            newTodo.value.done,
-            newTodo.value.description,
+      if (loadedTodoTask.value) {
+        const todoToUpdate = new ToDoItem(
+            toDoTask.value.title,
+            loadedTodoTask.value.done,
+            toDoTask.value.description,
         )
         store.dispatch("editTodoList", {todo: todoToUpdate, indexToUpdate: loadedIndex.value});
         isEdit.value = false;
-        loadedTodo.value = null;
-        newTodo.value = new TodoList();
+        loadedTodoTask.value = null;
+        toDoTask.value = new ToDoItem();
+
+        loadFiltered();
         return;
       }
 
-      if (newTodo.value.text.length) {
-        store.dispatch("setTodoList", newTodo.value);
-        newTodo.value = new TodoList();
+      if (toDoTask.value.title.length) {
+        store.dispatch("setTodoList", toDoTask.value);
+        toDoTask.value = new ToDoItem();
+
+        loadFiltered();
       } else {
         alert("O texto da tarefa é obrigatório!")
       }
     }
 
-    const done = (todo: TodoList) => {
+    const done = (todo: ToDoItem) => {
       todo.done = !todo.done;
     }
 
-    const clear = (todo: TodoList) => {
-      newTodo.value = new TodoList();
+    const remove = (todo: ToDoItem) => {
+      toDoTask.value = new ToDoItem();
       store.dispatch("clearTodoList",todo);
+
+      loadFiltered();
     }
 
-    const edit = (todo: TodoList, index: number) => {
-      newTodo.value.text = todo.text;
-      newTodo.value.description = todo.description;
+    const edit = (todo: ToDoItem, index: number) => {
+      toDoTask.value.title = todo.title;
+      toDoTask.value.description = todo.description;
       isEdit.value = true;
-      loadedTodo.value = todo;
+      loadedTodoTask.value = todo;
       loadedIndex.value = index;
     }
 
+    const searchToDo = (value: string) => {
+      search.value = value;
+
+      if (value.trim().length == 0) {
+        filteredList.value.splice(0)
+        filteredList.value.push(...toDoList.value);
+        return;
+      }
+
+      const list = toDoList.value.filter((it: ToDoItem) => {
+        return it.title.toLowerCase().startsWith(value.toLowerCase());
+      });
+
+      filteredList.value.splice(0);
+      filteredList.value.push(...list);
+    }
+
+    const loadFiltered = () => {
+      filteredList.value.splice(0);
+      filteredList.value.push(...toDoList.value);
+
+      searchToDo(search.value);
+    }
+
     return {
-      newTodo,
-      todos,
+      toDoTask: toDoTask,
+      toDoList,
       isEdit,
+      search,
+      filteredList,
+      searchToDo,
       submit,
       done,
-      clear,
+      remove,
       edit,
     }
   }
 });
 </script>
+
 <style scoped>
 section {
   width: 45%;
@@ -164,9 +206,7 @@ li {
   background-color: #efefef;
   border-radius: 10px;
 }
-.delete {
-  display: flex;
-}
+
 .delete::after {
   content: "";
   background-image: url("../assets/ep_delete.svg");

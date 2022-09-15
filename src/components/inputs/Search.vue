@@ -1,10 +1,6 @@
 <template>
   <div class="input-title">
-    <label for="input-title">{{label}}</label>
-    <input id="input-title"
-           type="text"
-           name="text"
-           @input="$emit('update:modelValue', $event.target.value)"  :placeholder="text" :value="modelValue">
+    <input id="input-title" class="input" type="text" name="text" @input="$emit('modelValue', $event.target.value)" :placeholder="text" :value="modelValue">
   </div>
 </template>
 
@@ -12,7 +8,7 @@
 import {defineComponent} from "vue";
 
 export default defineComponent ({
-  name: "InputComponent",
+  name: "SearchComponent",
   props: {
     text: {
       type: String,
